@@ -1,7 +1,7 @@
 package cihad.learning.socialmediaapp.controllers;
 
 import cihad.learning.socialmediaapp.entities.User;
-import cihad.learning.socialmediaapp.repositories.UserRepository;
+import cihad.learning.socialmediaapp.services.UserService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -10,46 +10,36 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/users")
 public class UserController {
-    private UserRepository userRepository;
+    private UserService userService;
 
-    public UserController(UserRepository userRepository) {
-        this.userRepository = userRepository;
+    public UserController(UserService userService) {
+        this.userService = userService;
     }
 
     @GetMapping
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    public List<User> getAll() {
+        return userService.getAll();
     }
 
     @PostMapping
-    public User createUser(@RequestBody User newuser) {
-        return userRepository.save(newuser);
+    public User create(@RequestBody User user) {
+        return userService.add(user);
     }
 
     @GetMapping("/{userId}")
-    public User getUser(@PathVariable Long userId) {
+    public User get(@PathVariable Long userId) {
         //custom exception
-        return userRepository.findById(userId).orElse(null);
+        return userService.getById(userId);
     }
 
     @PutMapping("/{userId}")
-    public User updateUser(@PathVariable Long userId, @RequestBody User newUser) {
-        Optional<User> user = userRepository.findById(userId);
-        if (user.isPresent()) {
-            User foundUser = user.get();
-            foundUser.setUserName(newUser.getUserName());
-            foundUser.setPassword(newUser.getPassword());
-            userRepository.save(foundUser);
-            return foundUser;
-        }//custom exception
-        else {
-            return null;
-        }
+    public User update(@PathVariable Long userId, @RequestBody User newUser) {
+        return userService.update(userId, newUser);
     }
 
     @DeleteMapping("/{userId}")
-    public void deleteUser(@PathVariable Long userId) {
-        userRepository.deleteById(userId);
+    public void delete(@PathVariable Long userId) {
+        userService.deleteById(userId);
     }
 
 }
