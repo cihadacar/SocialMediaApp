@@ -4,6 +4,7 @@ import cihad.learning.socialmediaapp.entities.Post;
 import cihad.learning.socialmediaapp.services.PostService;
 import cihad.learning.socialmediaapp.services.requests.PostCreateRequest;
 import cihad.learning.socialmediaapp.services.requests.PostUpdateRequest;
+import cihad.learning.socialmediaapp.services.responses.GetAllPostsResponse;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,7 +20,7 @@ public class PostController {
     }
 
     @GetMapping
-    public List<Post> getAll(@RequestParam Optional<Long> userId) {
+    public List<GetAllPostsResponse> getAll(@RequestParam Optional<Long> userId) {
         return postService.getAll(userId);
     }
 

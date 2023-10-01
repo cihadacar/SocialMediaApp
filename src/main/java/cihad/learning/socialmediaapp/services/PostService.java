@@ -1,30 +1,47 @@
 package cihad.learning.socialmediaapp.services;
 
+import cihad.learning.socialmediaapp.entities.Like;
 import cihad.learning.socialmediaapp.entities.Post;
 import cihad.learning.socialmediaapp.entities.User;
 import cihad.learning.socialmediaapp.repositories.PostRepository;
 import cihad.learning.socialmediaapp.services.requests.PostCreateRequest;
 import cihad.learning.socialmediaapp.services.requests.PostUpdateRequest;
+import cihad.learning.socialmediaapp.services.responses.GetAllLikesResponse;
+import cihad.learning.socialmediaapp.services.responses.GetAllPostsResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class PostService {
     private PostRepository postRepository;
     private UserService userService;
+    private LikeService likeService;
 
-    public PostService(PostRepository postRepository, UserService userService) {
+    @Lazy
+    public PostService(PostRepository postRepository, UserService userService, LikeService likeService) {
         this.postRepository = postRepository;
         this.userService = userService;
+        this.likeService = likeService;
+    }
+    public void setLikeService(LikeService likeService) {
+        this.likeService = likeService;
     }
 
-    public List<Post> getAll(Optional<Long> userId) {
+    public List<GetAllPostsResponse> getAll(Optional<Long> userId) {
+        List<Post> postList;
         if (userId.isPresent()) {
-            return postRepository.findByUserId(userId.get());
-        }
-        return postRepository.findAll();
+            postList = postRepository.findByUserId(userId.get());
+        } else
+            postList = postRepository.findAll();
+        return postList.stream().map(p -> {
+            List<GetAllLikesResponse> likes = likeService.getAllByParam(Optional.ofNullable(null), Optional.of(p.getId()));
+            return new GetAllPostsResponse(p, likes);
+        }).collect(Collectors.toList());
     }
 
     public Post getById(Long postId) {
