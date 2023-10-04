@@ -26,7 +26,6 @@ public class UserService {
     public User getById(Long userId) {
         return userRepository.findById(userId).orElse(null);
     }
-
     public User update(Long userId, User newUser) {
         Optional<User> user = userRepository.findById(userId);
         if (user.isPresent()) {
@@ -40,8 +39,10 @@ public class UserService {
             return null;
         }
     }
-
     public void deleteById(Long userId) {
         userRepository.deleteById(userId);
+    }
+    public User getByUserName(String userName) {
+        return userRepository.findByUserName(userName);
     }
 }
