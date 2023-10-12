@@ -4,6 +4,7 @@ import cihad.learning.socialmediaapp.entities.User;
 import cihad.learning.socialmediaapp.security.JwtTokenProvider;
 import cihad.learning.socialmediaapp.services.UserService;
 import cihad.learning.socialmediaapp.services.requests.UserRequest;
+import cihad.learning.socialmediaapp.services.responses.AuthenticationResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -18,13 +19,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
-
     private AuthenticationManager authenticationManager;
-
     private JwtTokenProvider jwtTokenProvider;
-
     private UserService userService;
-
     private PasswordEncoder passwordEncoder;
 
     public AuthController(AuthenticationManager authenticationManager, UserService userService, PasswordEncoder passwordEncoder, JwtTokenProvider jwtTokenProvider) {
@@ -35,25 +32,31 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public String login(@RequestBody UserRequest loginRequest) {
+    public AuthenticationResponse login(@RequestBody UserRequest loginRequest) {
         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(loginRequest.getUserName(), loginRequest.getPassword());
         Authentication auth = authenticationManager.authenticate(authToken);
         SecurityContextHolder.getContext().setAuthentication(auth);
         String jwtToken = jwtTokenProvider.generateJwtToken(auth);
-        return "Bearer " + jwtToken;
+        AuthenticationResponse authenticationResponse = new AuthenticationResponse();
+        User user = userService.getByUserName(loginRequest.getUserName());
+        authenticationResponse.setMessage("Bearer " + jwtToken);
+        authenticationResponse.setUserId(user.getId());
+        return authenticationResponse;
     }
 
     @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody UserRequest registerRequest) {
-        if(userService.getByUserName(registerRequest.getUserName()) != null)
-            return new ResponseEntity<>("Username already in use.", HttpStatus.BAD_REQUEST);
-
+    public ResponseEntity<AuthenticationResponse> register(@RequestBody UserRequest registerRequest) {
+        AuthenticationResponse authenticationResponse = new AuthenticationResponse();
+        if(userService.getByUserName(registerRequest.getUserName()) != null) {
+            authenticationResponse.setMessage("Username already in use.");
+            return new ResponseEntity<>(authenticationResponse, HttpStatus.BAD_REQUEST);
+        }
         User user = new User();
         user.setUserName(registerRequest.getUserName());
         user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
         userService.add(user);
-        return new ResponseEntity<>("User successfully registered.", HttpStatus.CREATED);
+        authenticationResponse.setMessage("User successfully registered.");
+        return new ResponseEntity<>(authenticationResponse, HttpStatus.CREATED);
     }
-
 
 }
