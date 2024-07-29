@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -28,6 +29,7 @@ public class PostService {
         this.userService = userService;
         this.likeService = likeService;
     }
+
     public void setLikeService(LikeService likeService) {
         this.likeService = likeService;
     }
@@ -48,6 +50,12 @@ public class PostService {
         return postRepository.findById(postId).orElse(null);
     }
 
+    public GetAllPostsResponse getOnePostByIdWithLikes(Long postId) {
+        Post post = postRepository.findById(postId).orElse(null);
+        List<GetAllLikesResponse> likes = likeService.getAllByParam(Optional.ofNullable(null), Optional.of(postId));
+        return new GetAllPostsResponse(post, likes);
+    }
+
     public Post add(PostCreateRequest newPostRequest) {
         User user = userService.getById(newPostRequest.getUserId());
         if (user == null) {
@@ -58,6 +66,7 @@ public class PostService {
         postToSave.setTitle(newPostRequest.getTitle());
         postToSave.setText(newPostRequest.getText());
         postToSave.setUser(user);
+        postToSave.setCreateDate(new Date());
         return postRepository.save(postToSave);
     }
 

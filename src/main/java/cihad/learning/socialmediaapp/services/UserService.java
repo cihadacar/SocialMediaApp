@@ -1,18 +1,30 @@
 package cihad.learning.socialmediaapp.services;
 
+import cihad.learning.socialmediaapp.entities.Comment;
+import cihad.learning.socialmediaapp.entities.Like;
 import cihad.learning.socialmediaapp.entities.User;
+import cihad.learning.socialmediaapp.repositories.CommentRepository;
+import cihad.learning.socialmediaapp.repositories.LikeRepository;
+import cihad.learning.socialmediaapp.repositories.PostRepository;
 import cihad.learning.socialmediaapp.repositories.UserRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 @Service
 public class UserService {
     private UserRepository userRepository;
+    private PostRepository postRepository;
+    private CommentRepository commentRepository;
+    private LikeRepository likeRepository;
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, PostRepository postRepository, CommentRepository commentRepository, LikeRepository likeRepository) {
         this.userRepository = userRepository;
+        this.postRepository = postRepository;
+        this.commentRepository = commentRepository;
+        this.likeRepository = likeRepository;
     }
 
     public List<User> getAll() {
@@ -32,6 +44,7 @@ public class UserService {
             User foundUser = user.get();
             foundUser.setUserName(newUser.getUserName());
             foundUser.setPassword(newUser.getPassword());
+            foundUser.setAvatar(newUser.getAvatar());
             userRepository.save(foundUser);
             return foundUser;
         }//custom exception
@@ -45,4 +58,16 @@ public class UserService {
     public User getByUserName(String userName) {
         return userRepository.findByUserName(userName);
     }
+
+    public List<Object> getUserActivity(Long userId) {
+        List<Long> postIds = postRepository.findTopByUserId(userId);
+        if (postIds.isEmpty())
+            return null;
+        List<Object> comments = commentRepository.findUserCommentsByPostId(postIds);
+        List<Object> likes = likeRepository.findUserLikesByPostId(postIds);
+        List<Object> result = new ArrayList<>();
+        result.addAll(comments);
+        result.addAll(likes);
+        return result;
+     }
 }

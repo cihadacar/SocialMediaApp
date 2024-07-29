@@ -25,8 +25,8 @@ public class PostController {
     }
 
     @GetMapping("/{postId}")
-    public Post getById(@PathVariable Long postId) {
-        return postService.getById(postId);
+    public GetAllPostsResponse getById(@PathVariable Long postId) {
+        return postService.getOnePostByIdWithLikes(postId);
     }
 
     @PostMapping

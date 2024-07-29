@@ -2,9 +2,11 @@ package cihad.learning.socialmediaapp.controllers;
 
 import cihad.learning.socialmediaapp.entities.User;
 import cihad.learning.socialmediaapp.services.UserService;
+import cihad.learning.socialmediaapp.services.responses.UserResponse;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @RestController
@@ -27,9 +29,9 @@ public class UserController {
     }
 
     @GetMapping("/{userId}")
-    public User get(@PathVariable Long userId) {
+    public UserResponse get(@PathVariable Long userId) {
         //custom exception
-        return userService.getById(userId);
+        return new UserResponse(userService.getById(userId));
     }
 
     @PutMapping("/{userId}")
@@ -42,4 +44,8 @@ public class UserController {
         userService.deleteById(userId);
     }
 
+    @GetMapping("/activity/{userId}")
+    public List<Object> getUserActivity(@PathVariable Long userId) {
+        return userService.getUserActivity(userId);
+    }
 }
