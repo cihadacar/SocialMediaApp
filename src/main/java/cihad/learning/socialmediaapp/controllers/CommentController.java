@@ -4,6 +4,7 @@ import cihad.learning.socialmediaapp.entities.Comment;
 import cihad.learning.socialmediaapp.services.CommentService;
 import cihad.learning.socialmediaapp.services.requests.CommentCreateRequest;
 import cihad.learning.socialmediaapp.services.requests.CommentUpdateRequest;
+import cihad.learning.socialmediaapp.services.responses.CommentResponse;
 import org.springframework.data.repository.query.Param;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,7 +21,7 @@ public class CommentController {
     }
 
     @GetMapping
-    public List<Comment> getAll(@RequestParam Optional<Long> userId, @RequestParam Optional<Long> postId) {
+    public List<CommentResponse> getAll(@RequestParam Optional<Long> userId, @RequestParam Optional<Long> postId) {
         return commentService.getAllByParam(userId, postId);
     }
 
