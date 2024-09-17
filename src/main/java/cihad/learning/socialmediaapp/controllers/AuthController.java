@@ -1,8 +1,11 @@
 package cihad.learning.socialmediaapp.controllers;
 
+import cihad.learning.socialmediaapp.entities.RefreshToken;
 import cihad.learning.socialmediaapp.entities.User;
 import cihad.learning.socialmediaapp.security.JwtTokenProvider;
+import cihad.learning.socialmediaapp.services.RefreshTokenService;
 import cihad.learning.socialmediaapp.services.UserService;
+import cihad.learning.socialmediaapp.services.requests.RefreshRequest;
 import cihad.learning.socialmediaapp.services.requests.UserRequest;
 import cihad.learning.socialmediaapp.services.responses.AuthenticationResponse;
 import org.springframework.http.HttpStatus;
@@ -23,12 +26,14 @@ public class AuthController {
     private JwtTokenProvider jwtTokenProvider;
     private UserService userService;
     private PasswordEncoder passwordEncoder;
+    private RefreshTokenService refreshTokenService;
 
-    public AuthController(AuthenticationManager authenticationManager, UserService userService, PasswordEncoder passwordEncoder, JwtTokenProvider jwtTokenProvider) {
+    public AuthController(AuthenticationManager authenticationManager, UserService userService, PasswordEncoder passwordEncoder, JwtTokenProvider jwtTokenProvider, RefreshTokenService refreshTokenService) {
         this.authenticationManager = authenticationManager;
         this.userService = userService;
         this.passwordEncoder = passwordEncoder;
         this.jwtTokenProvider = jwtTokenProvider;
+        this.refreshTokenService = refreshTokenService;
     }
 
     @PostMapping("/login")
@@ -39,7 +44,8 @@ public class AuthController {
         String jwtToken = jwtTokenProvider.generateJwtToken(auth);
         AuthenticationResponse authenticationResponse = new AuthenticationResponse();
         User user = userService.getByUserName(loginRequest.getUserName());
-        authenticationResponse.setMessage("Bearer " + jwtToken);
+        authenticationResponse.setAccessToken("Bearer " + jwtToken);
+        authenticationResponse.setRefreshToken(refreshTokenService.createRefreshToken(user));
         authenticationResponse.setUserId(user.getId());
         return authenticationResponse;
     }
@@ -55,8 +61,38 @@ public class AuthController {
         user.setUserName(registerRequest.getUserName());
         user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
         userService.add(user);
+
+        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(registerRequest.getUserName(), registerRequest.getPassword());
+        Authentication auth = authenticationManager.authenticate(authToken);
+        SecurityContextHolder.getContext().setAuthentication(auth);
+        String jwtToken = jwtTokenProvider.generateJwtToken(auth);
+
         authenticationResponse.setMessage("User successfully registered.");
+        authenticationResponse.setAccessToken("Bearer " + jwtToken);
+        authenticationResponse.setRefreshToken(refreshTokenService.createRefreshToken(user));
+        authenticationResponse.setUserId(user.getId());
+
         return new ResponseEntity<>(authenticationResponse, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthenticationResponse> refresh(@RequestBody RefreshRequest refreshRequest) {
+        AuthenticationResponse authenticationResponse = new AuthenticationResponse();
+        RefreshToken refreshToken = refreshTokenService.getByUser(refreshRequest.getUserId());
+        if(refreshToken.getToken().equals(refreshRequest.getRefreshToken()) &&
+                !refreshTokenService.isRefreshExpired(refreshToken)) {
+
+            User user = refreshToken.getUser();
+            String jwtToken = jwtTokenProvider.generateJwtTokenByUserId(user.getId());
+            authenticationResponse.setMessage("Token successfully refreshed.");
+            authenticationResponse.setAccessToken("Bearer " + jwtToken);
+            authenticationResponse.setUserId(user.getId());
+            return new ResponseEntity<>(authenticationResponse, HttpStatus.OK);
+        } else {
+            authenticationResponse.setMessage("Refresh token is not valid.");
+            return new ResponseEntity<>(authenticationResponse, HttpStatus.UNAUTHORIZED);
+        }
+
     }
 
 }

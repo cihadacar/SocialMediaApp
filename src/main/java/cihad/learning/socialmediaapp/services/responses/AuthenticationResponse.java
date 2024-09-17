@@ -8,4 +8,6 @@ import lombok.Setter;
 public class AuthenticationResponse {
     String message;
     Long userId;
+    String accessToken;
+    String refreshToken;
 }

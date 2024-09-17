@@ -43,6 +43,7 @@ public class UserService {
         if (user.isPresent()) {
             User foundUser = user.get();
             foundUser.setAvatar(newUser.getAvatar());
+
             userRepository.save(foundUser);
             return foundUser;
         }//custom exception
